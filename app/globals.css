@@ -12,3 +12,11 @@
 body {
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.gre-home {
+  --color-gre-accent: #4359ed;
+  --color-gre-brand-dot: #cdf22b;
+  --color-gre-muted: #64739a;
+  --color-gre-border: #dde2ed;
+  --color-gre-selection: #ebefff;
+}

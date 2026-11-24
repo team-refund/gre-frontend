@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 
 const MENU_ITEMS = [
   {
@@ -21,8 +20,7 @@ const MENU_ITEMS = [
   },
 ];
 
-export default function MainMenu({ id, closeButtonRef, onCloseMenu }) {
-  const pathname = usePathname();
+export default function MainMenu({ id, pathname, isHome, closeButtonRef, onCloseMenu }) {
   const activeItem =
     MENU_ITEMS.find(({ href }) => href === pathname) ??
     MENU_ITEMS.findLast(({ href }) => pathname.startsWith(`${href}/`));
@@ -30,7 +28,7 @@ export default function MainMenu({ id, closeButtonRef, onCloseMenu }) {
   return (
     <aside
       id={id}
-      className="h-full w-[min(230px,65vw)] border-r border-gre-border bg-white px-6 py-9
+      className="h-full w-[min(232px,65vw)] border-r border-gre-border bg-white px-6 py-10
         text-gre-text"
     >
       <div className="relative border-b border-gre-border pb-5">
@@ -39,9 +37,9 @@ export default function MainMenu({ id, closeButtonRef, onCloseMenu }) {
           ref={closeButtonRef}
           onClick={onCloseMenu}
           aria-label="메인 메뉴 닫기"
-          className="absolute -top-1 right-0 grid size-10 cursor-pointer place-items-center
+          className={`absolute -top-1 right-0 grid size-10 cursor-pointer place-items-center
             rounded-lg hover:bg-gre-selection focus-visible:outline-2
-            focus-visible:outline-gre-accent"
+            focus-visible:outline-gre-accent ${isHome ? 'xl:hidden' : ''}`}
         >
           <svg
             aria-hidden="true"
@@ -69,37 +67,47 @@ export default function MainMenu({ id, closeButtonRef, onCloseMenu }) {
           WORKSPACE
         </p>
         <ul className="grid gap-5">
-          {MENU_ITEMS.map(({ label, href, icon }) => {
-            return (
-              <li key={href}>
-                <Link
-                  href={href}
-                  aria-current={href === pathname ? 'page' : undefined}
-                  className={`flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm ${
-                    href === activeItem?.href
-                      ? 'bg-gre-selection font-semibold text-gre-accent'
-                      : 'text-gre-muted hover:bg-gre-selection'
-                  }`}
+          {MENU_ITEMS.map(({ label, href, icon }) => (
+            <li key={href}>
+              <Link
+                href={href}
+                aria-current={href === pathname ? 'page' : undefined}
+                className={`flex min-h-11 items-center gap-3 rounded-xl px-4 text-sm ${
+                  href === activeItem?.href
+                    ? 'bg-gre-selection font-semibold text-gre-accent'
+                    : 'text-gre-muted hover:bg-gre-selection'
+                }`}
+              >
+                <svg
+                  aria-hidden="true"
+                  className="size-4 shrink-0"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 >
-                  <svg
-                    aria-hidden="true"
-                    className="size-4 shrink-0"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d={icon} />
-                  </svg>
-                  {label}
-                </Link>
-              </li>
-            );
-          })}
+                  <path d={icon} />
+                </svg>
+                {label}
+              </Link>
+            </li>
+          ))}
         </ul>
       </nav>
+      {isHome && (
+        <Link
+          href="/me/gmail-connections"
+          className="mt-5 block rounded-xl bg-[#e7f6f1] px-3.5 py-4"
+        >
+          <span className="flex items-center gap-1.5 text-xs font-bold text-[#15775f]">
+            <span aria-hidden="true" className="size-2.5 rounded-full bg-current" />
+            Gmail 연결됨
+          </span>
+          <span className="mt-1.5 block text-[11px] text-gre-muted">승인된 메일만 발송합니다</span>
+        </Link>
+      )}
     </aside>
   );
 }

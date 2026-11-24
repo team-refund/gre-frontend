@@ -1,8 +1,9 @@
-export default function TopBar({ menuId, isMenuOpen, toggleButtonRef, onToggleMenu }) {
+export default function TopBar({ isHome, menuId, isMenuOpen, toggleButtonRef, onToggleMenu }) {
   return (
     <header
-      className="flex h-14 shrink-0 items-center justify-between gap-4
-        border-b border-gre-border bg-white px-2 @sm:px-4 @3xl:px-8"
+      className={`flex h-14 shrink-0 items-center justify-between gap-4 bg-white px-2 @sm:px-4 ${
+        isHome ? '@4xl:px-12' : 'border-b border-gre-border @3xl:px-8'
+      }`}
     >
       <div className="flex min-w-0 items-center gap-2">
         <button
@@ -12,9 +13,9 @@ export default function TopBar({ menuId, isMenuOpen, toggleButtonRef, onToggleMe
           aria-controls={menuId}
           aria-expanded={isMenuOpen}
           aria-label={isMenuOpen ? '메인 메뉴 닫기' : '메인 메뉴 열기'}
-          className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg
+          className={`grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg
             text-gre-text hover:bg-gre-selection focus-visible:outline-2
-            focus-visible:outline-gre-accent"
+            focus-visible:outline-gre-accent ${isHome && isMenuOpen ? '@4xl:hidden' : ''}`}
         >
           <svg
             aria-hidden="true"
@@ -28,8 +29,16 @@ export default function TopBar({ menuId, isMenuOpen, toggleButtonRef, onToggleMe
             <path d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-        <span className="text-sm font-bold text-gre-accent">GRE</span>
-        <span className="hidden text-sm font-medium text-gre-accent @3xl:inline">환불 에이전트</span>
+        {isHome ? (
+          <span className="text-xs text-gre-accent">GRE / 홈</span>
+        ) : (
+          <>
+            <span className="text-sm font-bold text-gre-accent">GRE</span>
+            <span className="hidden text-sm font-medium text-gre-accent @3xl:inline">
+              환불 에이전트
+            </span>
+          </>
+        )}
       </div>
       <span className="hidden text-xs text-gre-muted @sm:inline">
         <span className="@3xl:hidden">사건 관리</span>
