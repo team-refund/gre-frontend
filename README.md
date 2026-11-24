@@ -1,6 +1,6 @@
 ﻿# GRE Frontend
 
-Next.js App Router 기반 프론트엔드 공통 개발 기반이다. 기본 페이지는 실행 확인용으로 유지한다.
+Next.js App Router 기반 GRE 프론트엔드다. 루트 레이아웃에서 공통 탑바와 메뉴를 제공한다.
 
 ## 실행 및 검증
 
@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-개발 서버 기본 주소는 `http://localhost:3000`이다. 환경 변수가 필요하면 루트의 `.env.example`을 `.env.local`로 복사한다. 현재 기본 페이지에는 환경 변수가 필요 없다.
+개발 서버 기본 주소는 `http://localhost:3000`이다. 마이페이지에서 테스트 로그인하려면 루트의 `.env.example`을 `.env.local`로 복사하고 `API_BASE_URL`을 설정한다. 로컬 백엔드의 기본 주소는 `http://localhost:8080`이다.
 
 PowerShell에서 로컬 환경 파일을 처음 만들 때는 프론트엔드 디렉터리에서 실행한다.
 
@@ -25,7 +25,7 @@ npm run build
 npm run start
 ```
 
-`start`는 빌드 후 프로덕션 서버를 실행한다. 빌드와 ESLint는 별도 실행한다. 기존 `next/font/google`의 Geist 폰트는 빌드 시 다운로드에 네트워크 연결이 필요할 수 있다.
+`start`는 빌드 후 프로덕션 서버를 실행한다. 빌드와 ESLint는 별도 실행한다.
 
 GitHub Actions의 `GRE Frontend CI`는 `dev`·`main` 대상 PR과 해당 브랜치 push에서 실행된다. 프론트엔드 저장소의 `.github/workflows/gre-frontend-ci.yml`이 Node.js 24로 `npm ci`, `npm run lint`, `npm run build`를 실행한다. 현재 CI에 필요한 API 주소나 GitHub Secret은 없다.
 
@@ -33,17 +33,21 @@ GitHub Actions의 `GRE Frontend CI`는 `dev`·`main` 대상 PR과 해당 브랜�
 
 ```text
 app/
-├── favicon.ico
 ├── globals.css
 ├── layout.js
 └── page.js
+components/
+└── layout/
+    ├── AppLayout.js
+    ├── MainMenu.js
+    └── TopBar.js
 lib/
 └── api/
     ├── httpClient.js
     └── httpError.js
 ```
 
-아래 경로는 첫 실제 구현이 필요할 때 생성한다. 빈 폴더 유지를 위한 파일은 만들지 않는다.
+아직 없는 경로는 실제 구현이 필요할 때 생성한다.
 
 | 경로 | 책임 |
 | --- | --- |
@@ -72,14 +76,14 @@ lib/
 
 ## API 및 환경 설정
 
-- `httpClient(input, options)`는 네이티브 `fetch`를 호출하고 성공한 `Response`를 반환한다. URL이나 환경 변수를 자동 결합하지 않는다.
+- `httpClient(url, options)`는 Axios 요청을 보내고 성공하면 Axios 응답을 반환한다. URL이나 환경 변수를 자동 결합하지 않는다.
 - 비성공 HTTP 응답은 `HttpError`로 전달한다. `status`와 원본 `response`로 오류 본문을 확인할 수 있다. 네트워크 및 요청 취소 오류는 원본 그대로 전달한다.
-- 향후 `features/<feature>/api/`의 API 모듈이 주소 구성, 요청 직렬화, 응답 해석을 담당한다. JSON, 빈 응답(204), 텍스트, 파일은 각 API 계약에 맞춰 해석한다.
+- `features/<feature>/api/`의 API 모듈은 주소 구성, 요청 직렬화, 응답 해석을 담당한다. JSON, 빈 응답(204), 텍스트, 파일은 각 API 계약에 맞춰 해석한다.
 - 화면 또는 기능 Hook은 사용자에게 표시할 오류와 재시도를 결정한다. 공통 클라이언트에서 알림이나 화면 이동을 실행하지 않는다.
-- `headers`, `signal`, `cache`, Next.js의 `next` 등 fetch 옵션은 그대로 전달한다. 인증, 캐시 및 재시도 정책을 미리 강제하지 않는다.
-- 실제 API 주소, 엔드포인트, 인증 인터셉터 및 비즈니스 API는 아직 없다. 공통 클라이언트는 현재 페이지에서 호출하지 않는다.
+- 요청 본문은 Axios의 `data`로 전달한다. `headers`와 `signal` 등은 Axios 요청 옵션을 사용한다.
+- 개발 서버에서는 `API_BASE_URL`을 설정하면 마이페이지에서 백엔드 테스트 로그인을 사용할 수 있다. 백엔드에서 `GRE_DEV_TEST_LOGIN_ENABLED`가 활성화되어 있어야 한다.
 - 환경 파일은 프로젝트 루트에 둔다. `.env.local` 등은 Git에 커밋하지 않고 `.env.example`에 빈 설정 항목만 공유한다.
-- `API_BASE_URL`은 서버 전용으로 사용할 예정이다. 브라우저 직접 통신이 필요할 때만 공개 주소인 `NEXT_PUBLIC_API_BASE_URL`을 사용한다. 두 값은 현재 코드에서 읽지 않는다.
+- `API_BASE_URL`은 Next.js 서버에서 테스트 로그인 요청을 전달할 때 사용한다. 브라우저 직접 통신이 필요할 때만 공개 주소인 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
 - `NEXT_PUBLIC_*`는 빌드 시 브라우저 번들에 포함된다. 비밀 값을 넣지 않으며 값 변경 시 재빌드한다. 서버 전용 변수는 클라이언트 props나 응답으로 전달하지 않는다.
 - 별도 Spring Boot 서버의 CORS 및 인증 정책은 실제 연동 단계에서 함께 결정한다.
 
