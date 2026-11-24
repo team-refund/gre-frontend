@@ -1,42 +1,46 @@
 import axios from 'axios';
 
+const TEST_LOGIN_PATH = '/api/dev/test-login';
+const SESSION_COOKIE_NAME = 'JSESSIONID';
+const MAX_LOGIN_ID_LENGTH = 50;
+
 export async function POST(request) {
   const apiBaseUrl = process.env.API_BASE_URL;
   if (process.env.NODE_ENV !== 'development' || !apiBaseUrl) {
     return new Response(null, { status: 404 });
   }
 
-  if (!request.headers.get('content-type')?.startsWith('application/json')) {
+  const contentType = request.headers.get('content-type');
+  if (!contentType?.startsWith('application/json')) {
     return new Response(null, { status: 415 });
   }
 
   const body = await request.json().catch(() => null);
   const loginId = typeof body?.loginId === 'string' ? body.loginId.trim() : '';
-  if (!loginId || loginId.length > 50) {
+  if (!loginId || loginId.length > MAX_LOGIN_ID_LENGTH) {
     return new Response(null, { status: 400 });
   }
 
   try {
-    const headers = {};
-    const session = request.cookies.get('JSESSIONID');
-    if (session) {
-      headers.Cookie = `JSESSIONID=${encodeURIComponent(session.value)}`;
-    }
-
-    const url = new URL('/api/dev/test-login', apiBaseUrl).href;
-    const response = await axios.post(url, { loginId }, {
-      headers,
+    const session = request.cookies.get(SESSION_COOKIE_NAME);
+    const requestHeaders = session
+      ? { Cookie: `${SESSION_COOKIE_NAME}=${encodeURIComponent(session.value)}` }
+      : {};
+    const backendUrl = new URL(TEST_LOGIN_PATH, apiBaseUrl).href;
+    const backendResponse = await axios.post(backendUrl, { loginId }, {
+      headers: requestHeaders,
       maxRedirects: 0,
       validateStatus: () => true,
     });
 
-    if (response.status !== 204) {
-      return new Response(null, { status: response.status >= 400 ? response.status : 502 });
+    if (backendResponse.status !== 204) {
+      const status = backendResponse.status >= 400 ? backendResponse.status : 502;
+      return new Response(null, { status });
     }
 
     const responseHeaders = new Headers({ 'Cache-Control': 'no-store' });
-    for (const cookie of response.headers['set-cookie'] ?? []) {
-      if (cookie.startsWith('JSESSIONID=')) {
+    for (const cookie of backendResponse.headers['set-cookie'] ?? []) {
+      if (cookie.startsWith(`${SESSION_COOKIE_NAME}=`)) {
         responseHeaders.append('Set-Cookie', cookie);
       }
     }
