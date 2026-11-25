@@ -4,6 +4,33 @@ import {
 } from '@/components/ui/ConceptLayout';
 import { BOARDS, getQuestionDiscussion } from './boards';
 
+const POST_DATE_FORMAT = new Intl.DateTimeFormat('ko-KR', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+  timeZone: 'Asia/Seoul',
+});
+
+const POSTS_PER_PAGE = 2;
+const QUESTION_FILTERS = [
+  ['all', '전체'], ['open', '열림'], ['closed', '답변 완료'],
+];
+
+function PostMetadata({ author, updatedAt }) {
+  return (
+    <>
+      작성자 {author} · 최근 수정{' '}
+      <time dateTime={updatedAt}>{POST_DATE_FORMAT.format(new Date(updatedAt))}</time>
+    </>
+  );
+}
+
+function boardListHref(slug, status, page = 1) {
+  const query = {};
+  if (status !== 'all') query.status = status;
+  if (page > 1) query.page = String(page);
+  return { pathname: `/community/${slug}`, query };
+}
+
 function QuestionStatus({ status }) {
   const isClosed = status === 'closed';
   return (
@@ -31,6 +58,17 @@ function BoardTabs({ selected, isWriting = false }) {
 export async function BoardList({ slug, searchParams }) {
   const params = await searchParams;
   const board = BOARDS.find((item) => item.slug === slug);
+  const isQuestion = slug === 'question-posts';
+  const status = isQuestion && QUESTION_FILTERS.some(([value]) => value === params?.status)
+    ? params.status : 'all';
+  const posts = board.posts.map((post, index) => ({
+    post, index, status: isQuestion ? getQuestionDiscussion(index).status : null,
+  })).filter((item) => status === 'all' || item.status === status);
+  const pageCount = Math.max(1, Math.ceil(posts.length / POSTS_PER_PAGE));
+  const requestedPage = Number(params?.page);
+  const page = Number.isSafeInteger(requestedPage)
+    ? Math.min(Math.max(1, requestedPage), pageCount) : 1;
+  const pagePosts = posts.slice((page - 1) * POSTS_PER_PAGE, page * POSTS_PER_PAGE);
 
   return (
     <ConceptPage title={board.title} description={board.description}
@@ -42,24 +80,50 @@ export async function BoardList({ slug, searchParams }) {
         </p>
       )}
       <ConceptCard title="전체 게시글">
-        <p className="mb-2 text-sm text-gre-muted">예시 게시글 {board.posts.length}개</p>
+        {isQuestion && (
+          <nav aria-label="질문 상태 필터" className="mb-4 flex flex-wrap gap-2">
+            {QUESTION_FILTERS.map(([value, label]) => (
+              <Link key={value} href={boardListHref(slug, value)}
+                aria-current={value === status ? 'true' : undefined}
+                className={value === status ? 'gre-button gre-button-primary' : 'gre-button'}>
+                {label}
+              </Link>
+            ))}
+          </nav>
+        )}
+        <p className="mb-2 text-sm text-gre-muted">예시 게시글 {posts.length}개</p>
         <ul className="divide-y divide-gre-border">
-          {board.posts.map(([title, summary], index) => (
+          {pagePosts.map(({ post: [title, summary, metadata], index, status: postStatus }) => (
             <li key={title}>
               <Link className="block py-4 hover:text-gre-accent"
                 href={`/community/${slug}/detail?post=${index}`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <ConceptBadge tone="accent">{board.badge}</ConceptBadge>
-                  {slug === 'question-posts' && (
-                    <QuestionStatus status={getQuestionDiscussion(index).status} />
-                  )}
+                  {postStatus && <QuestionStatus status={postStatus} />}
                 </div>
                 <h3 className="mt-2 font-semibold">{title}</h3>
                 <p className="mt-1 text-sm text-gre-muted">{summary}</p>
+                <p className="mt-2 text-xs text-gre-muted"><PostMetadata {...metadata} /></p>
               </Link>
             </li>
           ))}
         </ul>
+        {posts.length === 0 && <p className="py-6 text-sm text-gre-muted">게시글이 없습니다.</p>}
+        {pageCount > 1 && (
+          <nav aria-label="게시글 페이지" className="mt-5 flex flex-wrap justify-center gap-2">
+            {page > 1 && <ConceptLink href={boardListHref(slug, status, page - 1)}>이전</ConceptLink>}
+            {Array.from({ length: pageCount }, (_, index) => index + 1).map((number) => (
+              <Link key={number} href={boardListHref(slug, status, number)}
+                aria-label={`${number} 페이지`} aria-current={number === page ? 'page' : undefined}
+                className={number === page ? 'gre-button gre-button-primary' : 'gre-button'}>
+                {number}
+              </Link>
+            ))}
+            {page < pageCount && (
+              <ConceptLink href={boardListHref(slug, status, page + 1)}>다음</ConceptLink>
+            )}
+          </nav>
+        )}
       </ConceptCard>
     </ConceptPage>
   );
@@ -70,12 +134,17 @@ export async function BoardDetail({ slug, searchParams }) {
   const board = BOARDS.find((item) => item.slug === slug);
   const requestedIndex = Number(params?.post);
   const postIndex = board.posts[requestedIndex] ? requestedIndex : 0;
-  const [title, summary] = board.posts[postIndex];
+  const [title, summary, metadata] = board.posts[postIndex];
   const discussion = slug === 'question-posts' ? getQuestionDiscussion(postIndex) : null;
   const { accepted, comments = [] } = discussion ?? {};
 
   return (
-    <ConceptPage title={title} description={`${board.title} · 예시 게시글`}
+    <ConceptPage title={title}
+      description={(
+        <>
+          {board.title} · 예시 게시글 · <PostMetadata {...metadata} />
+        </>
+      )}
       action={<ConceptLink href={`/community/${slug}`}>← 목록으로</ConceptLink>}>
       <ConceptCard>
         {discussion && <div className="mb-3"><QuestionStatus status={discussion.status} /></div>}
