@@ -2,7 +2,16 @@ import Link from 'next/link';
 import {
   ConceptBadge, ConceptCard, ConceptLink, ConceptPage,
 } from '@/components/ui/ConceptLayout';
-import { BOARDS } from './boards';
+import { BOARDS, getQuestionDiscussion } from './boards';
+
+function QuestionStatus({ status }) {
+  const isClosed = status === 'closed';
+  return (
+    <ConceptBadge tone={isClosed ? 'success' : 'accent'}>
+      {isClosed ? '답변 완료' : '열림'}
+    </ConceptBadge>
+  );
+}
 
 function BoardTabs({ selected, isWriting = false }) {
   return (
@@ -39,7 +48,12 @@ export async function BoardList({ slug, searchParams }) {
             <li key={title}>
               <Link className="block py-4 hover:text-gre-accent"
                 href={`/community/${slug}/detail?post=${index}`}>
-                <ConceptBadge tone="accent">{board.badge}</ConceptBadge>
+                <div className="flex flex-wrap items-center gap-2">
+                  <ConceptBadge tone="accent">{board.badge}</ConceptBadge>
+                  {slug === 'question-posts' && (
+                    <QuestionStatus status={getQuestionDiscussion(index).status} />
+                  )}
+                </div>
                 <h3 className="mt-2 font-semibold">{title}</h3>
                 <p className="mt-1 text-sm text-gre-muted">{summary}</p>
               </Link>
@@ -54,19 +68,42 @@ export async function BoardList({ slug, searchParams }) {
 export async function BoardDetail({ slug, searchParams }) {
   const params = await searchParams;
   const board = BOARDS.find((item) => item.slug === slug);
-  const [title, summary] = board.posts[Number(params?.post)] ?? board.posts[0];
+  const requestedIndex = Number(params?.post);
+  const postIndex = board.posts[requestedIndex] ? requestedIndex : 0;
+  const [title, summary] = board.posts[postIndex];
+  const discussion = slug === 'question-posts' ? getQuestionDiscussion(postIndex) : null;
+  const { accepted, comments = [] } = discussion ?? {};
 
   return (
     <ConceptPage title={title} description={`${board.title} · 예시 게시글`}
       action={<ConceptLink href={`/community/${slug}`}>← 목록으로</ConceptLink>}>
-      <ConceptCard><p className="min-h-32 text-sm leading-7">{summary}</p></ConceptCard>
+      <ConceptCard>
+        {discussion && <div className="mb-3"><QuestionStatus status={discussion.status} /></div>}
+        <p className="min-h-32 text-sm leading-7">{summary}</p>
+      </ConceptCard>
+      {accepted && (
+        <ConceptCard className="mt-6 border-emerald-200 bg-emerald-50/40" title="채택된 답변">
+          <p className="text-sm font-semibold">{accepted.author}</p>
+          <p className="mt-2 whitespace-pre-wrap text-sm leading-7">{accepted.body}</p>
+        </ConceptCard>
+      )}
       <ConceptCard className="mt-6" title="댓글">
+        {comments.length > 0 && (
+          <ul className="mb-4 divide-y divide-gre-border">
+            {comments.map(({ id, author, body }) => (
+              <li key={id} className="py-3">
+                <p className="text-sm font-semibold">{author}</p>
+                <p className="mt-1 whitespace-pre-wrap text-sm leading-7">{body}</p>
+              </li>
+            ))}
+          </ul>
+        )}
         <textarea aria-label="댓글" className="gre-field min-h-24"
           placeholder="경험이나 도움이 되는 내용을 남겨 주세요." />
         <div className="mt-3">
-          <ConceptLink href={`/community/${slug}/detail?post=${
-            board.posts.findIndex(([name]) => name === title)
-          }&preview=comment`} primary>댓글 등록</ConceptLink>
+          <ConceptLink href={`/community/${slug}/detail?post=${postIndex}&preview=comment`} primary>
+            댓글 등록
+          </ConceptLink>
         </div>
         {params?.preview === 'comment' && (
           <p className="mt-3 text-sm text-gre-muted" role="status">
@@ -115,7 +152,7 @@ export async function BoardCompose({ searchParams }) {
         </label>
         <p className="mt-3 text-sm text-gre-muted">연락처, 주문번호, 이메일은 가려 주세요.</p>
       </ConceptCard>}
-      {isQuestion && <div className="mt-4"><ConceptBadge tone="accent">질문 상태 · OPEN</ConceptBadge></div>}
+      {isQuestion && <div className="mt-4"><QuestionStatus status="open" /></div>}
       <div className="mt-5 flex items-center justify-end gap-2">
         <ConceptLink href={`/community/${board.slug}`}>취소</ConceptLink>
         <ConceptLink href={`/community/${board.slug}?preview=posted`} primary>게시글 등록</ConceptLink>

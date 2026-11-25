@@ -21,3 +21,33 @@ export const BOARDS = [
       ['교환 거절 이후 대응한 방법', '판매자 답변과 대응 과정을 정리했어요.'],
     ] },
 ];
+
+const QUESTION_DISCUSSIONS = {
+  2: {
+    acceptedCommentId: 'return-shipping-answer',
+    comments: [
+      {
+        id: 'return-shipping-follow-up',
+        author: '직구초보',
+        body: '판매자에게 반품 라벨을 받을 수 있는지도 확인해 보세요.',
+      },
+      {
+        id: 'return-shipping-answer',
+        author: '환불경험자',
+        body: '상품 불량 사진과 주문번호를 보내고, 판매자에게 반품 배송비 지원 여부를 먼저 물어보세요.',
+      },
+    ],
+  },
+};
+
+export function getQuestionDiscussion(postIndex) {
+  const discussion = QUESTION_DISCUSSIONS[postIndex];
+  const comments = discussion?.comments ?? [];
+  const accepted = comments.find(({ id }) => id === discussion?.acceptedCommentId);
+
+  return {
+    accepted,
+    comments: comments.filter(({ id }) => id !== accepted?.id),
+    status: accepted ? 'closed' : 'open',
+  };
+}
