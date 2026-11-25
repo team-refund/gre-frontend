@@ -1,17 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useSyncExternalStore } from 'react';
 import { ConceptBadge, ConceptLink } from '@/components/ui/ConceptLayout';
-import { CASE_EXAMPLES } from './caseExamples';
+import {
+  getRegisteredCases, getServerRegisteredCases, subscribeToRegisteredCases,
+} from './registeredCases';
 
 const FILTERS = [
   ['all', '전체'], ['active', '대응 중'], ['refund', '환불 확인 대기'], ['closed', '종료'],
 ];
 
-export default function CaseList() {
+export default function CaseList({ cases: exampleCases }) {
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
-  const matches = CASE_EXAMPLES.filter((item) =>
+  const registeredCases = useSyncExternalStore(
+    subscribeToRegisteredCases, getRegisteredCases, getServerRegisteredCases,
+  );
+  const cases = [...registeredCases, ...exampleCases];
+  const matches = cases.filter((item) =>
     (filter === 'all' || item.group === filter) &&
     `${item.name} ${item.id}`.toLowerCase().includes(query.trim().toLowerCase()),
   );
@@ -26,8 +32,8 @@ export default function CaseList() {
             className={filter === value ? 'gre-button gre-button-primary' : 'gre-button'}
             onClick={() => setFilter(value)}
           >
-            {label} {value === 'all' ? CASE_EXAMPLES.length :
-              CASE_EXAMPLES.filter((item) => item.group === value).length}
+            {label} {value === 'all' ? cases.length :
+              cases.filter((item) => item.group === value).length}
           </button>
         ))}
         <input

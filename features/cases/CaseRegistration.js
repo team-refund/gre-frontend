@@ -5,6 +5,7 @@ import { useRef, useState, useSyncExternalStore } from 'react';
 import { ConceptBadge, ConceptCard, ConceptLink } from '@/components/ui/ConceptLayout';
 import { getRefundDraft, getServerRefundDraft, setRefundDraft, subscribeToRefundDraft }
   from '@/features/home/refundDraft';
+import { registerCase } from './registeredCases';
 
 const TYPES = ['환불 지연', '상품 미배송', '중복 결제', '상품 불량'];
 
@@ -19,8 +20,10 @@ export default function CaseRegistration() {
   function handleSubmit(event) {
     event.preventDefault();
     const values = Object.fromEntries(new FormData(formRef.current));
-    setRefundDraft({ ...values, type, files: attachments });
-    router.push('/cases/register?step=processing');
+    const submittedDraft = { ...values, type, files: attachments };
+    setRefundDraft(submittedDraft);
+    const id = registerCase(submittedDraft);
+    router.push(`/cases/register?step=processing&id=${id}`);
   }
 
   return (

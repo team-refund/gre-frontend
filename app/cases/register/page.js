@@ -6,7 +6,7 @@ import CaseRegistration from '@/features/cases/CaseRegistration';
 const REGISTER_PATH = '/cases/register';
 
 export default async function CaseRegistrationPage({ searchParams }) {
-  const { step } = await searchParams;
+  const { step, id } = await searchParams;
 
   if (step === 'gmail' || step === 'imported' || step === 'processing') {
     const titles = {
@@ -44,7 +44,9 @@ export default async function CaseRegistrationPage({ searchParams }) {
             {step === 'imported' ? (
               <ConceptLink href={REGISTER_PATH} primary>사건 정보 입력 계속하기</ConceptLink>
             ) : (
-              <ConceptLink href="/cases/detail" primary>사건 상세 보기</ConceptLink>
+              <ConceptLink href={{ pathname: '/cases/detail', query: id ? { id } : {} }} primary>
+                사건 상세 보기
+              </ConceptLink>
             )}
           </ConceptCard>
         )}
