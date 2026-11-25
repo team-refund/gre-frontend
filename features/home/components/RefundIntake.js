@@ -1,37 +1,22 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
 import { setRefundDraft } from '@/features/home/refundDraft';
 
-const SUGGESTED_PROMPTS = [
-  ['환불 지연', '상품을 반품했는데 아직 환불받지 못했어요.'],
-  ['상품 미배송', '배송 예정일이 지났는데 아직 상품을 받지 못했어요.'],
-  ['중복 결제', '같은 주문의 결제 금액이 두 번 청구됐어요.'],
-  ['상품 불량', '받은 상품이 파손되었거나 정상적으로 작동하지 않아요.'],
-];
-
 export default function RefundIntake() {
   const router = useRouter();
-  const descriptionInputRef = useRef(null);
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState([]);
 
   function handleContinue() {
     const trimmedDescription = description.trim();
-    if (!trimmedDescription) {
-      descriptionInputRef.current.focus();
-      return;
+    if (trimmedDescription || attachments.length > 0) {
+      setRefundDraft({ description: trimmedDescription, files: attachments });
     }
 
-    setRefundDraft({ description: trimmedDescription, files: attachments });
     router.push('/cases/register');
-  }
-
-  function handlePromptSelect(prompt) {
-    setDescription(prompt);
-    descriptionInputRef.current.focus();
   }
 
   return (
@@ -46,7 +31,6 @@ export default function RefundIntake() {
       <div className="mt-[18px] grid h-40 grid-rows-[1fr_auto] rounded-2xl border border-gre-border
         bg-white px-6 py-[17px] text-left">
         <textarea
-          ref={descriptionInputRef}
           aria-label="환불 문제 설명"
           placeholder="상품을 반품했는데 아직 환불받지 못했어요."
           value={description}
@@ -84,20 +68,6 @@ export default function RefundIntake() {
           </button>
         </div>
       </div>
-      <ul className="mt-4 flex flex-wrap justify-center gap-2">
-        {SUGGESTED_PROMPTS.map(([label, prompt]) => (
-          <li key={label}>
-            <button
-              type="button"
-              onClick={() => handlePromptSelect(prompt)}
-              className="min-w-[100px] cursor-pointer rounded-lg border border-gre-border bg-white
-                px-4 py-2 text-[13px] leading-5 text-gre-muted hover:bg-gre-selection"
-            >
-              {label}
-            </button>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }
