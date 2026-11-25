@@ -1,12 +1,18 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import ChatComposer from '@/components/ui/ChatComposer';
+import { addRunReply, getRunReplies, subscribeToRegisteredCases } from './registeredCases';
 
-export default function RunFollowUpChat({ question, previousExchange }) {
+const EMPTY_REPLIES = [];
+const getServerReplies = () => EMPTY_REPLIES;
+
+export default function RunFollowUpChat({ runId, question, previousExchange }) {
   const [message, setMessage] = useState('');
   const [files, setFiles] = useState([]);
-  const [replies, setReplies] = useState([]);
+  const replies = useSyncExternalStore(
+    subscribeToRegisteredCases, () => getRunReplies(runId), getServerReplies,
+  );
   const logRef = useRef(null);
   const canSend = Boolean(message.trim() || files.length);
 
@@ -19,11 +25,11 @@ export default function RunFollowUpChat({ question, previousExchange }) {
     event.preventDefault();
     if (!canSend) return;
 
-    setReplies((current) => [...current, {
+    addRunReply(runId, {
       id: crypto.randomUUID(),
       message: message.trim(),
       files,
-    }]);
+    });
     setMessage('');
     setFiles([]);
   }

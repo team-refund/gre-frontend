@@ -4,6 +4,8 @@ const EMPTY_CASES = [];
 let registeredCases = EMPTY_CASES;
 const listeners = new Set();
 const runsByCaseId = new Map();
+const repliesByRun = new Map();
+const EMPTY_REPLIES = [];
 
 function publish(cases) {
   registeredCases = cases;
@@ -51,5 +53,14 @@ export function getLatestRun(id) {
 
 export function saveLatestRun(id, run) {
   runsByCaseId.set(id, [...(runsByCaseId.get(id) ?? []), run]);
+  listeners.forEach((listener) => listener());
+}
+
+export function getRunReplies(runId) {
+  return repliesByRun.get(runId) ?? EMPTY_REPLIES;
+}
+
+export function addRunReply(runId, reply) {
+  repliesByRun.set(runId, [...getRunReplies(runId), reply]);
   listeners.forEach((listener) => listener());
 }

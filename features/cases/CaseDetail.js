@@ -67,7 +67,9 @@ export default function CaseDetail({ caseId, example, closeExample }) {
         </ConceptCard>
         <ConceptCard title="증빙 및 정책 근거">
           <p className="mb-4 text-sm text-gre-muted">주문 확인서 · 결제 내역 · 판매자 환불 정책</p>
-          <ConceptLink href="/cases/detail/evidence">증빙·정책 근거 확인</ConceptLink>
+          <ConceptLink href={{ pathname: '/cases/detail/evidence', query: { id: item.id } }}>
+            증빙·정책 근거 확인
+          </ConceptLink>
         </ConceptCard>
       </div>
       {!isClosed && (

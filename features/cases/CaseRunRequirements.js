@@ -129,6 +129,7 @@ export default function CaseRunRequirements({ item, isExample }) {
       {hasExampleResult && item.followUpQuestion && (
         <RunFollowUpChat
           key={runNumber}
+          runId={`${item.id}:${runNumber}`}
           question={item.followUpQuestion}
           previousExchange={item.followUpExchange}
         />

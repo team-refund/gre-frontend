@@ -8,7 +8,11 @@ export default async function CaseDetailPage({ searchParams }) {
   }
 
   const cases = await getPreviewCases();
-  const example = cases.find((entry) => entry.id === id) ?? cases[0];
+  const example = id === undefined ? cases[0] : cases.find((entry) => entry.id === id);
+
+  if (!example) {
+    return <CaseDetail />;
+  }
 
   return <CaseDetail example={example} closeExample={closePreviewCase.bind(null, example.id)} />;
 }
