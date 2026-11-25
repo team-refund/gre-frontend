@@ -2,10 +2,11 @@
 
 import { useRouter } from 'next/navigation';
 import { useRef, useState, useSyncExternalStore } from 'react';
-import { ConceptBadge, ConceptCard, ConceptLink } from '@/components/ui/ConceptLayout';
+import { ConceptCard, ConceptLink } from '@/components/ui/ConceptLayout';
 import { getRefundDraft, getServerRefundDraft, setRefundDraft, subscribeToRefundDraft }
   from '@/features/home/refundDraft';
 import { registerCase } from './registeredCases';
+import { EVIDENCE_PHOTO_ACCEPT, selectEvidencePhotos } from './evidencePhotos';
 
 const TYPES = ['환불 지연', '상품 미배송', '중복 결제', '상품 불량'];
 
@@ -15,7 +16,16 @@ export default function CaseRegistration() {
   const formRef = useRef(null);
   const [type, setType] = useState(TYPES[0]);
   const [files, setFiles] = useState(null);
-  const attachments = files ?? draft?.files ?? [];
+  const [hasInvalidAttachment, setHasInvalidAttachment] = useState(false);
+  const attachments = files ?? selectEvidencePhotos(draft?.files ?? []);
+
+  function handleAttach(event) {
+    const { files: selectedFiles } = event.currentTarget;
+    const photos = selectEvidencePhotos(selectedFiles);
+    setHasInvalidAttachment(photos.length !== selectedFiles.length);
+    setFiles(photos);
+    if (photos.length !== selectedFiles.length) event.currentTarget.value = '';
+  }
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -28,10 +38,6 @@ export default function CaseRegistration() {
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center gap-3">
-        <ConceptBadge tone="accent">직접 입력</ConceptBadge>
-        <ConceptLink href="/cases/register?step=gmail">Gmail에서 가져오기</ConceptLink>
-      </div>
       <form ref={formRef} onSubmit={handleSubmit}
         className="grid items-start gap-6 @4xl:grid-cols-[1.65fr_1fr]">
         <ConceptCard title="01 사건 정보">
@@ -79,15 +85,18 @@ export default function CaseRegistration() {
           <p className="mt-3 text-xs text-gre-muted">화면 미리보기 · 입력은 현재 탭에만 보관합니다.</p>
         </ConceptCard>
         <ConceptCard title="02 증빙 첨부">
-          <p className="text-sm text-gre-muted">주문 확인서·결제 내역·판매자와의 대화를 첨부하세요.</p>
+          <p className="text-sm text-gre-muted">주문 확인서·결제 내역·판매자 대화의 사진이나 캡처를 첨부하세요.</p>
           <label className="mt-4 grid cursor-pointer gap-2 rounded-xl border border-dashed
             border-gre-border bg-gre-canvas p-5 text-sm font-semibold
             focus-within:outline-2 focus-within:outline-gre-accent">
-            <input type="file" className="sr-only" multiple accept="image/*,.pdf"
-              onChange={(event) => setFiles(Array.from(event.target.files))} />
-            ＋ 파일 추가
-            <span className="text-xs font-normal text-gre-muted">PDF · 이미지 · 이메일 캡처</span>
+            <input type="file" className="sr-only" multiple accept={EVIDENCE_PHOTO_ACCEPT}
+              onChange={handleAttach} />
+            ＋ 사진 추가
+            <span className="text-xs font-normal text-gre-muted">JPG · PNG · WebP · HEIC · HEIF · AVIF</span>
           </label>
+          {hasInvalidAttachment && (
+            <p role="alert" className="mt-2 text-sm text-red-700">증빙은 사진 파일만 첨부할 수 있습니다.</p>
+          )}
           {attachments.length > 0 && (
             <ul className="mt-3 space-y-1 break-all text-sm text-gre-muted">
               {attachments.map((file, i) => <li key={`${file.name}-${i}`}>{file.name}</li>)}

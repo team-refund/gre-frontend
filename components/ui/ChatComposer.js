@@ -5,6 +5,7 @@ export default function ChatComposer({
   onChange,
   onKeyDown,
   attachmentCount,
+  attachmentAccept,
   onAttach,
   actionLabel,
   onAction,
@@ -29,7 +30,8 @@ export default function ChatComposer({
         <div className="flex items-center justify-between gap-3">
           <label className="inline-flex cursor-pointer items-center gap-1 rounded text-sm
             font-medium text-gre-muted focus-within:outline-2 focus-within:outline-gre-accent">
-            <input type="file" multiple className="sr-only" onChange={onAttach} />
+            <input type="file" multiple className="sr-only" accept={attachmentAccept}
+              onChange={onAttach} />
             <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
               strokeWidth="1.5" strokeLinecap="round" className="size-5">
               <path d="m8 13 6 6a4 4 0 0 0 6-6L10 3a3 3 0 0 0-4 4l9 9a1.5 1.5 0 0 0 2-2l-7-7" />

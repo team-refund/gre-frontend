@@ -4,12 +4,22 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
 import ChatComposer from '@/components/ui/ChatComposer';
+import { EVIDENCE_PHOTO_ACCEPT, selectEvidencePhotos } from '@/features/cases/evidencePhotos';
 import { setRefundDraft } from '@/features/home/refundDraft';
 
 export default function RefundIntake() {
   const router = useRouter();
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState([]);
+  const [hasInvalidAttachment, setHasInvalidAttachment] = useState(false);
+
+  function handleAttach(event) {
+    const { files } = event.currentTarget;
+    const photos = selectEvidencePhotos(files);
+    setHasInvalidAttachment(photos.length !== files.length);
+    setAttachments(photos);
+    if (photos.length !== files.length) event.currentTarget.value = '';
+  }
 
   function handleContinue() {
     const trimmedDescription = description.trim();
@@ -36,10 +46,15 @@ export default function RefundIntake() {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           attachmentCount={attachments.length}
-          onAttach={(event) => setAttachments(Array.from(event.target.files))}
+          attachmentAccept={EVIDENCE_PHOTO_ACCEPT}
+          onAttach={handleAttach}
           actionLabel="사건 등록으로 이동"
           onAction={handleContinue}
-        />
+        >
+          {hasInvalidAttachment && (
+            <p role="alert" className="text-xs text-red-700">증빙은 사진 파일만 첨부할 수 있습니다.</p>
+          )}
+        </ChatComposer>
       </div>
     </section>
   );
