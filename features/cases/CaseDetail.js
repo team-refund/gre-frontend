@@ -36,7 +36,13 @@ export default function CaseDetail({ caseId, example, closeExample }) {
           <div><dt className="mb-2 text-gre-muted">사건 업무 상태</dt>
             <dd><ConceptBadge tone={item.tone}>{item.status}</ConceptBadge></dd></div>
           <div><dt className="mb-2 text-gre-muted">판매자</dt>
-            <dd>{item.seller ?? 'support@merchant.example'}</dd></div>
+            <dd>{item.seller ?? '—'}</dd>
+            {(item.merchantEmail || example) && (
+              <dd className="mt-1 wrap-anywhere text-gre-muted">
+                {item.merchantEmail ?? 'support@merchant.example'}
+              </dd>
+            )}
+          </div>
           <div><dt className="mb-2 text-gre-muted">다음 행동</dt><dd>{item.next}</dd></div>
         </dl>
       </ConceptCard>

@@ -57,9 +57,14 @@ export default function CaseRegistration() {
           <div className="grid gap-4 @xl:grid-cols-2">
             <label className="gre-label">판매자 *<input className="gre-field" name="seller" required
               defaultValue={draft?.seller} placeholder="판매자 이름" /></label>
+            <label className="gre-label">판매자 이메일 *
+              <input className="gre-field" name="merchantEmail" type="email" required
+                maxLength={255} defaultValue={draft?.merchantEmail}
+                placeholder="support@example.com" />
+            </label>
             <label className="gre-label">구매 사이트 *<input className="gre-field" name="site" required
               type="url" defaultValue={draft?.site} placeholder="https://" /></label>
-            <label className="gre-label @xl:col-span-2">주문번호 *
+            <label className="gre-label">주문번호 *
               <input className="gre-field" name="orderNumber" required
                 defaultValue={draft?.orderNumber} placeholder="주문번호를 입력하세요" />
             </label>

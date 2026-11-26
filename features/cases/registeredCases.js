@@ -31,6 +31,7 @@ export function registerCase(draft) {
     id,
     name: `${draft.seller} · ${draft.type}`,
     seller: draft.seller,
+    merchantEmail: draft.merchantEmail,
     requirement: draft.description,
     files: draft.files,
     status: '대응 중',
