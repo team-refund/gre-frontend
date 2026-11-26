@@ -1,0 +1,172 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
+import { ConceptBadge, ConceptCard, ConceptLink } from '@/components/ui/ConceptLayout';
+
+import {
+  approveEmailDraft, getEmailDraft, getEmailSendAttempts, sendEmailDraft,
+} from '../api/emailDraftApi';
+
+const SEND_STATUS = {
+  SENDING: '발송 중이에요. 잠시 뒤 상태를 다시 확인해 주세요.',
+  SENT: 'Gmail로 이메일을 발송했어요.',
+  FAILED: '이메일이 발송되지 않았어요. Gmail 연결과 초안 내용을 확인해 주세요.',
+  UNKNOWN: '발송 결과를 확인할 수 없어요. Gmail 보낸편지함을 확인해 주세요.',
+};
+
+function getErrorMessage(error, fallback) {
+  if (error.status === 401) return '마이페이지에서 로그인해 주세요.';
+  return error.response?.data?.message || fallback;
+}
+
+export default function EmailDraftEditor({ draftId }) {
+  const [draft, setDraft] = useState(null);
+  const [attempt, setAttempt] = useState(null);
+  const [isApproved, setIsApproved] = useState(false);
+  const [action, setAction] = useState('');
+  const [error, setError] = useState('');
+  const [isSendUnconfirmed, setIsSendUnconfirmed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    Promise.all([
+      getEmailDraft(draftId, controller.signal),
+      getEmailSendAttempts(draftId, controller.signal),
+    ]).then(([details, attempts]) => {
+      if (controller.signal.aborted) return;
+      setDraft(details);
+      setAttempt(attempts[0] ?? null);
+    }).catch((failure) => {
+      if (!controller.signal.aborted) {
+        setError(getErrorMessage(failure, '이메일 초안을 불러오지 못했어요.'));
+      }
+    });
+    return () => controller.abort();
+  }, [draftId]);
+
+  function handleChange(event) {
+    const { name, value } = event.target;
+    setDraft((current) => ({ ...current, [name]: value }));
+    setIsApproved(false);
+  }
+
+  async function handleApprove(event) {
+    event.preventDefault();
+    setAction('approve');
+    setError('');
+    try {
+      const { to, subject, body } = draft;
+      await approveEmailDraft(draftId, { to: to.trim(), subject: subject.trim(), body });
+      setIsApproved(true);
+    } catch (failure) {
+      setError(getErrorMessage(failure, '이메일 초안을 저장하지 못했어요.'));
+    } finally {
+      setAction('');
+    }
+  }
+
+  async function handleSend() {
+    setAction('send');
+    setError('');
+    try {
+      const result = await sendEmailDraft(draftId, window.crypto.randomUUID());
+      setAttempt(result);
+      setIsApproved(false);
+    } catch (failure) {
+      if (!failure.status || failure.status >= 500) {
+        setIsSendUnconfirmed(true);
+      }
+      setError(getErrorMessage(failure, '발송 결과를 확인하지 못했어요.'));
+    } finally {
+      setAction('');
+    }
+  }
+
+  async function handleCheckStatus() {
+    setAction('check');
+    setError('');
+    try {
+      const attempts = await getEmailSendAttempts(draftId);
+      setAttempt(attempts[0] ?? null);
+      if (attempts.length > 0) setIsSendUnconfirmed(false);
+    } catch (failure) {
+      setError(getErrorMessage(failure, '발송 상태를 확인하지 못했어요.'));
+    } finally {
+      setAction('');
+    }
+  }
+
+  const canEdit = draft?.status === 'DRAFT' && !attempt && !isSendUnconfirmed;
+  const displayStatus = attempt?.status === 'SENT' ? 'SENT' : attempt ? 'FINALIZED' : draft?.status;
+
+  return (
+    <ConceptCard title="이메일 초안">
+      {!draft && !error && <p role="status">초안을 불러오는 중이에요.</p>}
+      {draft && (
+        <>
+          <ConceptBadge tone={displayStatus === 'SENT' ? 'success' : 'neutral'}>
+            {displayStatus}
+          </ConceptBadge>
+          <form className="mt-4 grid gap-4" onSubmit={handleApprove}>
+            <fieldset disabled={!canEdit || Boolean(action)} className="grid min-w-0 gap-4">
+              <label className="gre-label">
+                받는 사람
+                <input className="gre-field" name="to" type="email" required maxLength={255}
+                  value={draft.to ?? ''} onChange={handleChange} />
+              </label>
+              <label className="gre-label">
+                제목
+                <input className="gre-field" name="subject" required maxLength={255}
+                  value={draft.subject ?? ''} onChange={handleChange} />
+              </label>
+              <label className="gre-label">
+                본문
+                <textarea className="gre-field" name="body" required rows={10} maxLength={20000}
+                  value={draft.body ?? ''} onChange={handleChange} />
+              </label>
+            </fieldset>
+            {draft.attachmentEvidenceIds?.length > 0 && (
+              <p className="text-sm text-gre-muted">첨부 증빙 {draft.attachmentEvidenceIds.length}개</p>
+            )}
+            {canEdit && (
+              <div className="flex flex-wrap gap-2">
+                {isApproved ? (
+                  <>
+                    <button type="button" className="gre-button" disabled={Boolean(action)}
+                      onClick={() => setIsApproved(false)}>승인 취소</button>
+                    <button type="button" className="gre-button gre-button-primary"
+                      disabled={Boolean(action)} onClick={handleSend}>
+                      {action === 'send' ? '발송 요청 중…' : 'Gmail로 발송'}
+                    </button>
+                  </>
+                ) : (
+                  <button type="submit" className="gre-button gre-button-primary"
+                    disabled={Boolean(action)}>
+                    {action === 'approve' ? '저장 중…' : '초안 승인'}
+                  </button>
+                )}
+              </div>
+            )}
+          </form>
+          {isApproved && canEdit && (
+            <p role="status" className="mt-3 text-sm">초안을 저장했어요. 발송 전에 승인을 취소할 수 있어요.</p>
+          )}
+          {attempt && (
+            <p role="status" className="mt-3 text-sm">{SEND_STATUS[attempt.status]}</p>
+          )}
+          {(isSendUnconfirmed || ['SENDING', 'UNKNOWN'].includes(attempt?.status)) && (
+            <button type="button" className="gre-button mt-3" disabled={Boolean(action)}
+              onClick={handleCheckStatus}>
+              {action === 'check' ? '확인 중…' : '발송 상태 확인'}
+            </button>
+          )}
+        </>
+      )}
+      {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+      <div className="mt-4">
+        <ConceptLink href="/me/gmail-connections">Gmail 연결 관리</ConceptLink>
+      </div>
+    </ConceptCard>
+  );
+}

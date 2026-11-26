@@ -26,7 +26,10 @@ export default function CaseDetail({ caseId, example, closeExample }) {
   }
 
   const isClosed = item.group === 'closed';
-  const isDraftReady = !isClosed && item.id === CASE_EXAMPLES[0].id;
+  const isDraftReady = !isClosed && (Boolean(item.draftId) || item.id === CASE_EXAMPLES[0].id);
+  const draftHref = item.draftId
+    ? { pathname: '/cases/detail/email-draft', query: { draftId: item.draftId } }
+    : '/cases/detail/email-draft';
 
   return (
     <ConceptPage title={item.name} description={`${item.id} · 화면 예시 데이터`}
@@ -49,9 +52,9 @@ export default function CaseDetail({ caseId, example, closeExample }) {
       {isDraftReady && (
         <section className="mb-6 flex flex-wrap items-center justify-between gap-4 rounded-[15px]
           bg-gre-selection p-6">
-          <div><h2 className="font-bold">영문 이메일 초안 v3를 검토해 주세요</h2>
+          <div><h2 className="font-bold">영문 이메일 초안을 검토해 주세요</h2>
             <p className="mt-2 text-sm text-gre-muted">수신자·제목·본문을 확인합니다.</p></div>
-          <ConceptLink href="/cases/detail/email-draft" primary>초안 작성·수정 →</ConceptLink>
+          <ConceptLink href={draftHref} primary>초안 작성·수정 →</ConceptLink>
         </section>
       )}
       {!isClosed && (

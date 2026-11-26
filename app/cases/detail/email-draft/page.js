@@ -1,6 +1,7 @@
 import {
   ConceptBadge, ConceptCard, ConceptLink, ConceptPage,
 } from '@/components/ui/ConceptLayout';
+import EmailDraftEditor from '@/features/cases/components/EmailDraftEditor';
 
 const DRAFT_PATH = '/cases/detail/email-draft';
 const PREVIEW_STEPS = {
@@ -15,7 +16,23 @@ const PREVIEW_STEPS = {
 };
 
 export default async function EmailDraftPage({ searchParams }) {
-  const { step } = await searchParams;
+  const { draftId, step } = await searchParams;
+
+  if (typeof draftId === 'string' && /^[1-9]\d{0,18}$/.test(draftId)) {
+    return (
+      <ConceptPage title="이메일 초안 작성·발송"
+        action={<ConceptLink href="/cases">← 내 사건</ConceptLink>}>
+        <EmailDraftEditor key={draftId} draftId={draftId} />
+      </ConceptPage>
+    );
+  }
+  if (draftId !== undefined) {
+    return (
+      <ConceptPage title="이메일 초안을 찾을 수 없어요"
+        action={<ConceptLink href="/cases">← 내 사건</ConceptLink>} />
+    );
+  }
+
   const preview = Object.hasOwn(PREVIEW_STEPS, step) ? PREVIEW_STEPS[step] : null;
 
   if (preview) {

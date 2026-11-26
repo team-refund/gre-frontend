@@ -1,5 +1,7 @@
 import Link from 'next/link';
 
+import GmailConnectionMenuLink from '@/features/gmail/components/GmailConnectionMenuLink';
+
 const MENU_ITEMS = [
   {
     label: '홈',
@@ -96,16 +98,7 @@ export default function MainMenu({ id, pathname, isHome, closeButtonRef, onClose
           ))}
         </ul>
       </nav>
-      <Link
-        href="/me/gmail-connections"
-        className="mt-5 block rounded-xl bg-[#eaf8f3] px-3.5 py-4"
-      >
-        <span className="flex items-center gap-1.5 text-xs font-bold text-[#187f66]">
-          <span aria-hidden="true" className="size-2.5 rounded-full bg-current" />
-          {isHome ? 'Gmail 연결됨' : 'Gmail 연결 관리'}
-        </span>
-        <span className="mt-1.5 block text-[11px] text-gre-muted">승인된 메일만 발송합니다</span>
-      </Link>
+      <GmailConnectionMenuLink pathname={pathname} />
     </aside>
   );
 }

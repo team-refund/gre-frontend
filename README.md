@@ -1,4 +1,4 @@
-﻿# GRE Frontend
+# GRE Frontend
 
 Next.js App Router 기반 GRE 프론트엔드다. 루트 레이아웃에서 공통 탑바와 메뉴를 제공한다.
 
@@ -83,9 +83,16 @@ lib/
 - 요청 본문은 Axios의 `data`로 전달한다. `headers`와 `signal` 등은 Axios 요청 옵션을 사용한다.
 - 개발 서버에서는 `API_BASE_URL`을 설정하면 마이페이지에서 백엔드 테스트 로그인을 사용할 수 있다. 백엔드에서 `GRE_DEV_TEST_LOGIN_ENABLED`가 활성화되어 있어야 한다.
 - 환경 파일은 프로젝트 루트에 둔다. `.env.local` 등은 Git에 커밋하지 않고 `.env.example`에 빈 설정 항목만 공유한다.
-- `API_BASE_URL`은 Next.js 서버에서 테스트 로그인 요청을 전달할 때 사용한다. 브라우저 직접 통신이 필요할 때만 공개 주소인 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
+- `API_BASE_URL`은 Next.js 서버에서 테스트 로그인, Gmail, 이메일 초안 요청을 전달할 때 사용한다. 브라우저 직접 통신이 필요할 때만 공개 주소인 `NEXT_PUBLIC_API_BASE_URL`을 사용한다.
 - `NEXT_PUBLIC_*`는 빌드 시 브라우저 번들에 포함된다. 비밀 값을 넣지 않으며 값 변경 시 재빌드한다. 서버 전용 변수는 클라이언트 props나 응답으로 전달하지 않는다.
 - 별도 Spring Boot 서버의 CORS 및 인증 정책은 실제 연동 단계에서 함께 결정한다.
+
+## Gmail 로컬 연동
+
+- 마이페이지에서 테스트 로그인한 뒤 Gmail 연결 화면으로 이동한다. 프론트는 Next.js 서버를 통해 백엔드에 로그인 세션을 전달한다.
+- Google OAuth에 등록한 콜백 주소와 백엔드의 `GOOGLE_REDIRECT_URI`를 일치시킨다. 로컬 기본값은 `http://localhost:8080/api/gmail/oauth2/callback`이다.
+- 백엔드의 `GRE_GMAIL_SUCCESS_REDIRECT_URI`는 `http://localhost:3000/me/gmail-connections`로 설정한다. 프론트와 백엔드는 브라우저에서 같은 호스트 이름을 사용한다.
+- 저장된 사건 이메일 초안은 `/cases/detail/email-draft?draftId=<id>`에서 연다. 승인 버튼은 초안을 저장하고, Gmail 발송 버튼은 별도로 요청한다.
 
 ## 코드 컨벤션 및 협업
 

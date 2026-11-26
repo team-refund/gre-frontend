@@ -40,6 +40,7 @@ export function ConceptBadge({ children, tone = 'neutral' }) {
     accent: 'bg-gre-selection text-gre-accent',
     success: 'bg-emerald-50 text-emerald-800',
     approval: 'bg-amber-50 text-amber-800',
+    danger: 'bg-red-50 text-red-700',
   };
 
   return <span className={`inline-flex rounded-md px-2 py-1 text-xs font-semibold ${tones[tone]}`}>
