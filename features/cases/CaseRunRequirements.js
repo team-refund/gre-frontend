@@ -2,6 +2,7 @@
 
 import { useState, useSyncExternalStore } from 'react';
 import ChatComposer from '@/components/ui/ChatComposer';
+import { EVIDENCE_PHOTO_ACCEPT, selectEvidencePhotos } from './evidencePhotos';
 import RunFollowUpChat from './RunFollowUpChat';
 import { getLatestRun, saveLatestRun, subscribeToRegisteredCases } from './registeredCases';
 
@@ -30,9 +31,12 @@ export default function CaseRunRequirements({ item, isExample }) {
   }
 
   function handleAttach(event) {
-    const files = Array.from(event.target.files, (file) => ({ id: crypto.randomUUID(), file }));
-    setDraft((current) => ({ ...current, attachments: [...current.attachments, ...files] }));
+    const photos = selectEvidencePhotos(event.target.files);
     event.target.value = '';
+    if (!photos.length) return;
+
+    const attachments = photos.map((file) => ({ id: crypto.randomUUID(), file }));
+    setDraft((current) => ({ ...current, attachments: [...current.attachments, ...attachments] }));
   }
 
   function handleSubmit(event) {
@@ -66,6 +70,7 @@ export default function CaseRunRequirements({ item, isExample }) {
             onChange={(event) => setDraft({ ...draft, requirement: event.target.value })}
             onKeyDown={handleKeyDown}
             attachmentCount={draft.attachments.length}
+            attachmentAccept={EVIDENCE_PHOTO_ACCEPT}
             onAttach={handleAttach}
             actionLabel="요구사항 저장 및 새 Run 등록"
             disabled={!canSave}

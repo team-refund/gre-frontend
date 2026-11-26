@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import ChatComposer from '@/components/ui/ChatComposer';
+import { EVIDENCE_PHOTO_ACCEPT, selectEvidencePhotos } from './evidencePhotos';
 import { addRunReply, getRunReplies, subscribeToRegisteredCases } from './registeredCases';
 
 const EMPTY_REPLIES = [];
@@ -20,6 +21,12 @@ export default function RunFollowUpChat({ runId, question, previousExchange }) {
     const log = logRef.current;
     log.scrollTop = log.scrollHeight;
   }, [replies]);
+
+  function handleAttach(event) {
+    const photos = selectEvidencePhotos(event.target.files);
+    event.target.value = '';
+    if (photos.length) setFiles(photos);
+  }
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -85,10 +92,8 @@ export default function RunFollowUpChat({ runId, question, previousExchange }) {
           onChange={(event) => setMessage(event.target.value)}
           onKeyDown={handleKeyDown}
           attachmentCount={files.length}
-          onAttach={(event) => {
-            setFiles(Array.from(event.target.files));
-            event.target.value = '';
-          }}
+          attachmentAccept={EVIDENCE_PHOTO_ACCEPT}
+          onAttach={handleAttach}
           actionLabel="답변 보내기"
           disabled={!canSend}
         >
