@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from '@/lib/api/getApiErrorMessage';
 import { httpClient } from '@/lib/api/httpClient';
 
 export const GMAIL_AUTHORIZE_PATH = '/api/gmail/oauth2/authorize';
@@ -31,10 +32,11 @@ export async function createGmailDraft(draft) {
 }
 
 export function gmailErrorMessage(error, fallback) {
-  const code = error.response?.data?.code;
-  if (error.status === 401) return '마이페이지에서 로그인해 주세요.';
+  const code = error?.code;
+  if (error?.status === 401) return '마이페이지에서 로그인해 주세요.';
+  if (code === 'GMAIL_NOT_CONNECTED') return '마이페이지에서 Gmail을 먼저 연결해 주세요.';
   if (code === 'GMAIL_REAUTH_REQUIRED' || code === 'GMAIL_SCOPE_REQUIRED') {
     return 'Gmail 연결을 다시 설정해 주세요.';
   }
-  return error.response?.data?.message || fallback;
+  return getApiErrorMessage(error, fallback);
 }

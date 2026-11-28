@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 
 import { ConceptBadge, ConceptCard, ConceptLink } from '@/components/ui/ConceptLayout';
+import { gmailErrorMessage } from '@/features/gmail/api/gmailApi';
 
 import {
   approveEmailDraft, getEmailDraft, getEmailSendAttempts, sendEmailDraft,
@@ -14,11 +15,6 @@ const SEND_STATUS = {
   FAILED: '이메일이 발송되지 않았어요. Gmail 연결과 초안 내용을 확인해 주세요.',
   UNKNOWN: '발송 결과를 확인할 수 없어요. Gmail 보낸편지함을 확인해 주세요.',
 };
-
-function getErrorMessage(error, fallback) {
-  if (error.status === 401) return '마이페이지에서 로그인해 주세요.';
-  return error.response?.data?.message || fallback;
-}
 
 export default function EmailDraftEditor({ draftId }) {
   const [draft, setDraft] = useState(null);
@@ -39,7 +35,7 @@ export default function EmailDraftEditor({ draftId }) {
       setAttempt(attempts[0] ?? null);
     }).catch((failure) => {
       if (!controller.signal.aborted) {
-        setError(getErrorMessage(failure, '이메일 초안을 불러오지 못했어요.'));
+        setError(gmailErrorMessage(failure, '이메일 초안을 불러오지 못했어요.'));
       }
     });
     return () => controller.abort();
@@ -60,7 +56,7 @@ export default function EmailDraftEditor({ draftId }) {
       await approveEmailDraft(draftId, { to: to.trim(), subject: subject.trim(), body });
       setIsApproved(true);
     } catch (failure) {
-      setError(getErrorMessage(failure, '이메일 초안을 저장하지 못했어요.'));
+      setError(gmailErrorMessage(failure, '이메일 초안을 저장하지 못했어요.'));
     } finally {
       setAction('');
     }
@@ -74,10 +70,12 @@ export default function EmailDraftEditor({ draftId }) {
       setAttempt(result);
       setIsApproved(false);
     } catch (failure) {
-      if (!failure.status || failure.status >= 500) {
+      if (!failure?.status || failure.status >= 500 || failure.action === 'CHECK_SEND_STATUS') {
         setIsSendUnconfirmed(true);
+        setError('발송 결과를 확인하지 못했어요. 다시 보내기 전에 발송 상태를 확인해 주세요.');
+      } else {
+        setError(gmailErrorMessage(failure, '이메일을 발송하지 못했어요.'));
       }
-      setError(getErrorMessage(failure, '발송 결과를 확인하지 못했어요.'));
     } finally {
       setAction('');
     }
@@ -91,7 +89,7 @@ export default function EmailDraftEditor({ draftId }) {
       setAttempt(attempts[0] ?? null);
       if (attempts.length > 0) setIsSendUnconfirmed(false);
     } catch (failure) {
-      setError(getErrorMessage(failure, '발송 상태를 확인하지 못했어요.'));
+      setError(gmailErrorMessage(failure, '발송 상태를 확인하지 못했어요.'));
     } finally {
       setAction('');
     }
