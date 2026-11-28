@@ -19,7 +19,6 @@ const SEND_STATUS = {
 export default function EmailDraftEditor({ draftId }) {
   const [draft, setDraft] = useState(null);
   const [attempt, setAttempt] = useState(null);
-  const [isApproved, setIsApproved] = useState(false);
   const [action, setAction] = useState('');
   const [error, setError] = useState('');
   const [isSendUnconfirmed, setIsSendUnconfirmed] = useState(false);
@@ -44,7 +43,6 @@ export default function EmailDraftEditor({ draftId }) {
   function handleChange(event) {
     const { name, value } = event.target;
     setDraft((current) => ({ ...current, [name]: value }));
-    setIsApproved(false);
   }
 
   async function handleApprove(event) {
@@ -53,8 +51,18 @@ export default function EmailDraftEditor({ draftId }) {
     setError('');
     try {
       const { to, subject, body } = draft;
-      await approveEmailDraft(draftId, { to: to.trim(), subject: subject.trim(), body });
-      setIsApproved(true);
+      const approved = await approveEmailDraft(draftId, {
+        to: to.trim(),
+        subject: subject.trim(),
+        body,
+      });
+      setDraft((current) => ({
+        ...current,
+        to: to.trim(),
+        subject: subject.trim(),
+        body,
+        status: approved.status,
+      }));
     } catch (failure) {
       setError(gmailErrorMessage(failure, '이메일 초안을 저장하지 못했어요.'));
     } finally {
@@ -68,7 +76,6 @@ export default function EmailDraftEditor({ draftId }) {
     try {
       const result = await sendEmailDraft(draftId, window.crypto.randomUUID());
       setAttempt(result);
-      setIsApproved(false);
     } catch (failure) {
       if (!failure?.status || failure.status >= 500 || failure.action === 'CHECK_SEND_STATUS') {
         setIsSendUnconfirmed(true);
@@ -96,7 +103,8 @@ export default function EmailDraftEditor({ draftId }) {
   }
 
   const canEdit = draft?.status === 'DRAFT' && !attempt && !isSendUnconfirmed;
-  const displayStatus = attempt?.status === 'SENT' ? 'SENT' : attempt ? 'FINALIZED' : draft?.status;
+  const canSend = draft?.status === 'FINALIZED' && !attempt && !isSendUnconfirmed;
+  const displayStatus = attempt?.status === 'SENT' ? 'SENT' : draft?.status;
 
   return (
     <ConceptCard title="이메일 초안">
@@ -127,17 +135,13 @@ export default function EmailDraftEditor({ draftId }) {
             {draft.attachmentEvidenceIds?.length > 0 && (
               <p className="text-sm text-gre-muted">첨부 증빙 {draft.attachmentEvidenceIds.length}개</p>
             )}
-            {canEdit && (
+            {(canEdit || canSend) && (
               <div className="flex flex-wrap gap-2">
-                {isApproved ? (
-                  <>
-                    <button type="button" className="gre-button" disabled={Boolean(action)}
-                      onClick={() => setIsApproved(false)}>승인 취소</button>
-                    <button type="button" className="gre-button gre-button-primary"
-                      disabled={Boolean(action)} onClick={handleSend}>
-                      {action === 'send' ? '발송 요청 중…' : 'Gmail로 발송'}
-                    </button>
-                  </>
+                {canSend ? (
+                  <button type="button" className="gre-button gre-button-primary"
+                    disabled={Boolean(action)} onClick={handleSend}>
+                    {action === 'send' ? '발송 요청 중…' : 'Gmail로 발송'}
+                  </button>
                 ) : (
                   <button type="submit" className="gre-button gre-button-primary"
                     disabled={Boolean(action)}>
@@ -147,8 +151,8 @@ export default function EmailDraftEditor({ draftId }) {
               </div>
             )}
           </form>
-          {isApproved && canEdit && (
-            <p role="status" className="mt-3 text-sm">초안을 저장했어요. 발송 전에 승인을 취소할 수 있어요.</p>
+          {canSend && (
+            <p role="status" className="mt-3 text-sm">초안이 승인되었어요. 내용을 확인하고 발송해 주세요.</p>
           )}
           {attempt && (
             <p role="status" className="mt-3 text-sm">{SEND_STATUS[attempt.status]}</p>
