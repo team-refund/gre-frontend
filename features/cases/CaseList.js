@@ -7,16 +7,16 @@ import {
 } from './registeredCases';
 
 const FILTERS = [
-  ['all', '전체'], ['active', '대응 중'], ['refund', '환불 확인 대기'], ['closed', '종료'],
+  ['all', '전체'], ['active', '진행 중'], ['closed', '해결·종료'],
 ];
 
-export default function CaseList({ cases: exampleCases }) {
+export default function CaseList({ cases: pageCases }) {
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
   const registeredCases = useSyncExternalStore(
     subscribeToRegisteredCases, getRegisteredCases, getServerRegisteredCases,
   );
-  const cases = [...registeredCases, ...exampleCases];
+  const cases = [...registeredCases, ...pageCases];
   const matches = cases.filter((item) =>
     (filter === 'all' || item.group === filter) &&
     `${item.name} ${item.id}`.toLowerCase().includes(query.trim().toLowerCase()),
@@ -24,6 +24,9 @@ export default function CaseList({ cases: exampleCases }) {
 
   return (
     <>
+      <p className="mb-3 text-sm text-gre-muted">
+        검색과 상태별 건수는 현재 페이지와 브라우저 임시 사건에 적용됩니다.
+      </p>
       <div className="mb-6 flex flex-wrap gap-2">
         {FILTERS.map(([value, label]) => (
           <button
@@ -37,9 +40,9 @@ export default function CaseList({ cases: exampleCases }) {
           </button>
         ))}
         <input
-          aria-label="사건명 또는 사건번호 검색"
+          aria-label="현재 화면의 사건명 또는 사건번호 검색"
           className="gre-field max-w-56"
-          placeholder="사건명·사건번호 검색"
+          placeholder="현재 화면에서 검색"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
@@ -74,7 +77,7 @@ export default function CaseList({ cases: exampleCases }) {
           </tbody>
         </table>
       </div>
-      <p className="mt-5 text-xs text-gre-muted">총 {matches.length}건 · 화면 예시 데이터</p>
+      <p className="mt-5 text-xs text-gre-muted">현재 화면 검색 결과 {matches.length}건</p>
     </>
   );
 }
