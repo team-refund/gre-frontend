@@ -1,37 +1,33 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 
+import ChatComposer from '@/components/ui/ChatComposer';
+import { EVIDENCE_PHOTO_ACCEPT, selectEvidencePhotos } from '@/features/cases/evidencePhotos';
 import { setRefundDraft } from '@/features/home/refundDraft';
-
-const SUGGESTED_PROMPTS = [
-  ['환불 지연', '상품을 반품했는데 아직 환불받지 못했어요.'],
-  ['상품 미배송', '배송 예정일이 지났는데 아직 상품을 받지 못했어요.'],
-  ['중복 결제', '같은 주문의 결제 금액이 두 번 청구됐어요.'],
-  ['상품 불량', '받은 상품이 파손되었거나 정상적으로 작동하지 않아요.'],
-];
 
 export default function RefundIntake() {
   const router = useRouter();
-  const descriptionInputRef = useRef(null);
   const [description, setDescription] = useState('');
   const [attachments, setAttachments] = useState([]);
+  const [hasInvalidAttachment, setHasInvalidAttachment] = useState(false);
+
+  function handleAttach(event) {
+    const { files } = event.currentTarget;
+    const photos = selectEvidencePhotos(files);
+    setHasInvalidAttachment(photos.length !== files.length);
+    setAttachments(photos);
+    if (photos.length !== files.length) event.currentTarget.value = '';
+  }
 
   function handleContinue() {
     const trimmedDescription = description.trim();
-    if (!trimmedDescription) {
-      descriptionInputRef.current.focus();
-      return;
+    if (trimmedDescription || attachments.length > 0) {
+      setRefundDraft({ description: trimmedDescription, files: attachments });
     }
 
-    setRefundDraft({ description: trimmedDescription, files: attachments });
     router.push('/cases/register');
-  }
-
-  function handlePromptSelect(prompt) {
-    setDescription(prompt);
-    descriptionInputRef.current.focus();
   }
 
   return (
@@ -43,61 +39,23 @@ export default function RefundIntake() {
         어떤 환불 문제가 있으신가요?
       </h1>
       <p className="mt-2 text-gre-muted">해외 직구 중 겪은 문제를 알려주세요.</p>
-      <div className="mt-[18px] grid h-40 grid-rows-[1fr_auto] rounded-2xl border border-gre-border
-        bg-white px-6 py-[17px] text-left">
-        <textarea
-          ref={descriptionInputRef}
-          aria-label="환불 문제 설명"
+      <div className="mt-[18px]">
+        <ChatComposer
+          inputLabel="환불 문제 설명"
           placeholder="상품을 반품했는데 아직 환불받지 못했어요."
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          className="min-h-0 w-full resize-none rounded text-base leading-6 outline-gre-accent
-            placeholder:text-[#8995ae]"
-        />
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-1 rounded text-sm
-            font-medium text-gre-muted
-            focus-within:outline-2 focus-within:outline-gre-accent">
-            <input
-              type="file"
-              multiple
-              className="sr-only"
-              onChange={(event) => setAttachments(Array.from(event.target.files))}
-            />
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="1.5" strokeLinecap="round" className="size-5">
-              <path d="m8 13 6 6a4 4 0 0 0 6-6L10 3a3 3 0 0 0-4 4l9 9a1.5 1.5 0 0 0 2-2l-7-7" />
-            </svg>
-            증빙자료 첨부{attachments.length > 0 && ` (${attachments.length})`}
-          </label>
-          <button
-            type="button"
-            aria-label="사건 등록으로 이동"
-            onClick={handleContinue}
-            className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-[10px]
-              bg-gre-accent text-xl text-white hover:brightness-95"
-          >
-            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="size-5">
-              <path d="M12 19V5m-6 6 6-6 6 6" />
-            </svg>
-          </button>
-        </div>
+          attachmentCount={attachments.length}
+          attachmentAccept={EVIDENCE_PHOTO_ACCEPT}
+          onAttach={handleAttach}
+          actionLabel="사건 등록으로 이동"
+          onAction={handleContinue}
+        >
+          {hasInvalidAttachment && (
+            <p role="alert" className="text-xs text-red-700">증빙은 사진 파일만 첨부할 수 있습니다.</p>
+          )}
+        </ChatComposer>
       </div>
-      <ul className="mt-4 flex flex-wrap justify-center gap-2">
-        {SUGGESTED_PROMPTS.map(([label, prompt]) => (
-          <li key={label}>
-            <button
-              type="button"
-              onClick={() => handlePromptSelect(prompt)}
-              className="min-w-[100px] cursor-pointer rounded-lg border border-gre-border bg-white
-                px-4 py-2 text-[13px] leading-5 text-gre-muted hover:bg-gre-selection"
-            >
-              {label}
-            </button>
-          </li>
-        ))}
-      </ul>
     </section>
   );
 }

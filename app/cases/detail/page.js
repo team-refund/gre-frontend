@@ -1,7 +1,18 @@
-export default function CaseDetailPage() {
-  return (
-    <main className="flex-1 p-6">
-      <h1 className="text-2xl font-semibold">내 사건 상세</h1>
-    </main>
-  );
+import CaseDetail from '@/features/cases/CaseDetail';
+import { closePreviewCase, getPreviewCases } from '@/features/cases/casePreviewState';
+
+export default async function CaseDetailPage({ searchParams }) {
+  const { id } = await searchParams;
+  if (typeof id === 'string' && id.startsWith('preview-')) {
+    return <CaseDetail caseId={id} />;
+  }
+
+  const cases = await getPreviewCases();
+  const example = id === undefined ? cases[0] : cases.find((entry) => entry.id === id);
+
+  if (!example) {
+    return <CaseDetail />;
+  }
+
+  return <CaseDetail example={example} closeExample={closePreviewCase.bind(null, example.id)} />;
 }

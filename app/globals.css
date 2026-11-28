@@ -1,11 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-gre-text: #181b20;
-  --color-gre-muted: #65748a;
-  --color-gre-border: #e6e9ef;
-  --color-gre-accent: #405ef5;
-  --color-gre-selection: #eceffd;
+  --color-gre-text: #172033;
+  --color-gre-muted: #68758b;
+  --color-gre-border: #e5e9f1;
+  --color-gre-accent: #4565ec;
+  --color-gre-selection: #eef1ff;
+  --color-gre-canvas: #f7f8fc;
   --color-gre-brand-dot: #c6ed12;
 }
 
@@ -19,4 +20,27 @@ body {
   --color-gre-muted: #64739a;
   --color-gre-border: #dde2ed;
   --color-gre-selection: #ebefff;
+}
+
+@layer components {
+  .gre-button {
+    @apply inline-flex min-h-10 shrink-0 items-center justify-center rounded-[11px]
+      border border-gre-border bg-white px-3.5 text-sm font-semibold
+      hover:bg-gre-selection focus-visible:outline-2 focus-visible:outline-gre-accent
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .gre-button-primary {
+    @apply border-gre-accent bg-gre-accent text-white hover:bg-gre-accent hover:brightness-95;
+  }
+
+  .gre-field {
+    @apply w-full rounded-[9px] border border-gre-border bg-white px-3 py-2.5 text-sm
+      font-normal text-gre-text placeholder:text-gre-muted focus-visible:outline-2
+      focus-visible:outline-gre-accent;
+  }
+
+  .gre-label {
+    @apply grid min-w-0 gap-2 text-sm font-semibold;
+  }
 }

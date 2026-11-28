@@ -49,6 +49,7 @@ export default function AppLayout({ children }) {
       </div>
       <div className="@container flex min-w-0 flex-col">
         <TopBar
+          pathname={pathname}
           isHome={isHome}
           menuId={MENU_ID}
           isMenuOpen={isMenuOpen}

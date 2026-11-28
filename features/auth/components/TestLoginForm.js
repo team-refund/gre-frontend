@@ -4,6 +4,7 @@ import { useState } from 'react';
 
 import { useCurrentUser } from '@/contexts/CurrentUserContext';
 import { testLogin } from '@/features/auth/api/testLogin';
+import { getApiErrorMessage } from '@/lib/api/getApiErrorMessage';
 
 export default function TestLoginForm() {
   const { setUserId } = useCurrentUser();
@@ -25,8 +26,8 @@ export default function TestLoginForm() {
     try {
       await testLogin(loginId);
       setUserId(loginId);
-    } catch {
-      setError('테스트 로그인에 실패했어요.');
+    } catch (error) {
+      setError(getApiErrorMessage(error, '테스트 로그인에 실패했어요.'));
     } finally {
       setIsSubmitting(false);
     }

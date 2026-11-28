@@ -1,28 +1,25 @@
-import Link from 'next/link';
-
+import { ConceptCard, ConceptLink, ConceptPage } from '@/components/ui/ConceptLayout';
 import CurrentUserInfo from '@/features/auth/components/CurrentUserInfo';
 import TestLoginForm from '@/features/auth/components/TestLoginForm';
 
 export default function UserProfilePage() {
   const isDevelopment = process.env.NODE_ENV === 'development';
   const gmailConnectionLink = (
-    <Link
-      href="/me/gmail-connections"
-      className="mt-4 inline-flex items-center rounded-lg border border-gre-border px-4 py-2
-        text-sm font-medium text-gre-accent hover:bg-gre-selection"
-    >
-      Gmail 연동
-    </Link>
+    <ConceptLink href="/me/gmail-connections">Gmail 연결</ConceptLink>
   );
 
   return (
-    <main className="flex-1 p-6">
-      <h1 className="text-2xl font-semibold">마이페이지</h1>
-      {isDevelopment ? (
-        <CurrentUserInfo signedOutContent={<TestLoginForm />}>
-          {gmailConnectionLink}
-        </CurrentUserInfo>
-      ) : gmailConnectionLink}
-    </main>
+    <ConceptPage title="마이페이지" description="Gmail 연결과 내 사건을 관리하세요.">
+      <ConceptCard title="Gmail 연결 정보">
+        <p className="mb-4 text-sm text-gre-muted">
+          연결된 Google 계정으로 사건 이메일을 확인할 수 있어요.
+        </p>
+        {isDevelopment ? (
+          <CurrentUserInfo signedOutContent={<TestLoginForm />}>
+            {gmailConnectionLink}
+          </CurrentUserInfo>
+        ) : gmailConnectionLink}
+      </ConceptCard>
+    </ConceptPage>
   );
 }
