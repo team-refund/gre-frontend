@@ -6,7 +6,7 @@ import { ConceptBadge, ConceptCard, ConceptLink } from '@/components/ui/ConceptL
 import { gmailErrorMessage } from '@/features/gmail/api/gmailApi';
 
 import {
-  approveEmailDraft, getEmailDraft, getEmailSendAttempts, sendEmailDraft,
+  approveEmailDraft, getEmailDraft, getEmailSendAttempts, sendEmailDraft, updateEmailDraft,
 } from '../api/emailDraftApi';
 
 const SEND_STATUS = {
@@ -21,6 +21,7 @@ export default function EmailDraftEditor({ draftId }) {
   const [attempt, setAttempt] = useState(null);
   const [action, setAction] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const [isSendUnconfirmed, setIsSendUnconfirmed] = useState(false);
 
   useEffect(() => {
@@ -42,29 +43,30 @@ export default function EmailDraftEditor({ draftId }) {
 
   function handleChange(event) {
     const { name, value } = event.target;
+    setNotice('');
     setDraft((current) => ({ ...current, [name]: value }));
   }
 
-  async function handleApprove(event) {
+  async function handleDraftSubmit(event) {
     event.preventDefault();
-    setAction('approve');
+    if (!canEdit || action) return;
+
+    const shouldApprove = event.nativeEvent.submitter?.value === 'approve';
+    setAction(shouldApprove ? 'approve' : 'save');
     setError('');
+    setNotice('');
     try {
-      const { to, subject, body } = draft;
-      const approved = await approveEmailDraft(draftId, {
-        to: to.trim(),
-        subject: subject.trim(),
-        body,
-      });
-      setDraft((current) => ({
-        ...current,
-        to: to.trim(),
-        subject: subject.trim(),
-        body,
-        status: approved.status,
-      }));
+      const content = { to: draft.to.trim(), subject: draft.subject.trim(), body: draft.body };
+      if (shouldApprove) {
+        const approved = await approveEmailDraft(draftId, content);
+        setDraft((current) => ({ ...current, ...content, status: approved.status }));
+      } else {
+        setDraft(await updateEmailDraft(draftId, content));
+        setNotice('초안을 저장했어요.');
+      }
     } catch (failure) {
-      setError(gmailErrorMessage(failure, '이메일 초안을 저장하지 못했어요.'));
+      const fallback = shouldApprove ? '이메일 초안을 승인하지 못했어요.' : '초안을 저장하지 못했어요.';
+      setError(gmailErrorMessage(failure, fallback));
     } finally {
       setAction('');
     }
@@ -114,7 +116,7 @@ export default function EmailDraftEditor({ draftId }) {
           <ConceptBadge tone={displayStatus === 'SENT' ? 'success' : 'neutral'}>
             {displayStatus}
           </ConceptBadge>
-          <form className="mt-4 grid gap-4" onSubmit={handleApprove}>
+          <form className="mt-4 grid gap-4" onSubmit={handleDraftSubmit}>
             <fieldset disabled={!canEdit || Boolean(action)} className="grid min-w-0 gap-4">
               <label className="gre-label">
                 받는 사람
@@ -143,10 +145,16 @@ export default function EmailDraftEditor({ draftId }) {
                     {action === 'send' ? '발송 요청 중…' : 'Gmail로 발송'}
                   </button>
                 ) : (
-                  <button type="submit" className="gre-button gre-button-primary"
-                    disabled={Boolean(action)}>
-                    {action === 'approve' ? '저장 중…' : '초안 승인'}
-                  </button>
+                  <>
+                    <button type="submit" value="save" className="gre-button"
+                      disabled={Boolean(action)}>
+                      {action === 'save' ? '저장 중…' : '초안 저장'}
+                    </button>
+                    <button type="submit" value="approve" className="gre-button gre-button-primary"
+                      disabled={Boolean(action)}>
+                      {action === 'approve' ? '승인 중…' : '초안 승인'}
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -166,6 +174,7 @@ export default function EmailDraftEditor({ draftId }) {
         </>
       )}
       {error && <p role="alert" className="mt-3 text-sm text-red-700">{error}</p>}
+      {notice && <p role="status" className="mt-3 text-sm">{notice}</p>}
       <div className="mt-4">
         <ConceptLink href="/me/gmail-connections">Gmail 연결 관리</ConceptLink>
       </div>

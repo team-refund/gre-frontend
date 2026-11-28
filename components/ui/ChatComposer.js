@@ -10,6 +10,7 @@ export default function ChatComposer({
   actionLabel,
   onAction,
   disabled = false,
+  inputDisabled = false,
   children,
 }) {
   return (
@@ -22,13 +23,14 @@ export default function ChatComposer({
         value={value}
         onChange={onChange}
         onKeyDown={onKeyDown}
+        disabled={inputDisabled}
         className="min-h-0 w-full resize-none rounded text-base leading-6 outline-gre-accent
           placeholder:text-[#8995ae]"
       />
       <div className="mt-2 space-y-2">
         {children}
-        <div className="flex items-center justify-between gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-1 rounded text-sm
+        <div className={onAttach ? 'flex items-center justify-between gap-3' : 'flex justify-end'}>
+          {onAttach && <label className="inline-flex cursor-pointer items-center gap-1 rounded text-sm
             font-medium text-gre-muted focus-within:outline-2 focus-within:outline-gre-accent">
             <input type="file" multiple className="sr-only" accept={attachmentAccept}
               onChange={onAttach} />
@@ -37,7 +39,7 @@ export default function ChatComposer({
               <path d="m8 13 6 6a4 4 0 0 0 6-6L10 3a3 3 0 0 0-4 4l9 9a1.5 1.5 0 0 0 2-2l-7-7" />
             </svg>
             증빙자료 첨부{attachmentCount > 0 && ` (${attachmentCount})`}
-          </label>
+          </label>}
           <button
             type={onAction ? 'button' : 'submit'}
             aria-label={actionLabel}

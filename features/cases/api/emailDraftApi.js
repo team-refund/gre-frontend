@@ -13,6 +13,14 @@ export async function approveEmailDraft(draftId, draft) {
   return data;
 }
 
+export async function updateEmailDraft(draftId, draft) {
+  const { data } = await httpClient(`/api/email-drafts/${draftId}`, {
+    method: 'PUT',
+    data: draft,
+  });
+  return data;
+}
+
 export async function sendEmailDraft(draftId, requestKey) {
   const { data } = await httpClient(`/api/email-drafts/${draftId}/send`, {
     method: 'POST',

@@ -2,6 +2,7 @@ import { proxyError, relayBackendResponse, requestBackend } from '@/lib/api/sess
 
 const EMAIL_DRAFT_ROUTES = {
   GET: new Set(['', 'send-attempts']),
+  PUT: new Set(['']),
   POST: new Set(['approve', 'send']),
 };
 
@@ -16,4 +17,4 @@ async function handleEmailDraftRequest(request, { params }) {
   return relayBackendResponse(await requestBackend(request, path));
 }
 
-export { handleEmailDraftRequest as GET, handleEmailDraftRequest as POST };
+export { handleEmailDraftRequest as GET, handleEmailDraftRequest as POST, handleEmailDraftRequest as PUT };

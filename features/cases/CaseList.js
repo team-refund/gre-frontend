@@ -1,22 +1,15 @@
 'use client';
 
-import { useState, useSyncExternalStore } from 'react';
+import { useState } from 'react';
 import { ConceptBadge, ConceptLink } from '@/components/ui/ConceptLayout';
-import {
-  getRegisteredCases, getServerRegisteredCases, subscribeToRegisteredCases,
-} from './registeredCases';
 
 const FILTERS = [
   ['all', '전체'], ['active', '진행 중'], ['closed', '해결·종료'],
 ];
 
-export default function CaseList({ cases: pageCases }) {
+export default function CaseList({ cases }) {
   const [filter, setFilter] = useState('all');
   const [query, setQuery] = useState('');
-  const registeredCases = useSyncExternalStore(
-    subscribeToRegisteredCases, getRegisteredCases, getServerRegisteredCases,
-  );
-  const cases = [...registeredCases, ...pageCases];
   const matches = cases.filter((item) =>
     (filter === 'all' || item.group === filter) &&
     `${item.name} ${item.id}`.toLowerCase().includes(query.trim().toLowerCase()),
@@ -25,7 +18,7 @@ export default function CaseList({ cases: pageCases }) {
   return (
     <>
       <p className="mb-3 text-sm text-gre-muted">
-        검색과 상태별 건수는 현재 페이지와 브라우저 임시 사건에 적용됩니다.
+        검색과 상태별 건수는 현재 페이지에 적용됩니다.
       </p>
       <div className="mb-6 flex flex-wrap gap-2">
         {FILTERS.map(([value, label]) => (
